@@ -84,7 +84,8 @@ mkdir -p /mnt/$encrypted_disk_mapper_device_name
 mount /dev/mapper/$encrypted_disk_mapper_device_name /mnt/$encrypted_disk_mapper_device_name
 
 # write something to the encrypted file-system/disk.
-echo hello world >/mnt/$encrypted_disk_mapper_device_name/message.txt
+expected_message='hello world'
+echo $expected_message >/mnt/$encrypted_disk_mapper_device_name/message.txt
 
 # unmount it.
 umount /mnt/$encrypted_disk_mapper_device_name
@@ -93,3 +94,13 @@ cryptsetup luksClose $encrypted_disk_mapper_device_name
 # mount it again.
 echo -n "$encrypted_disk_passphrase" | cryptsetup luksOpen --batch-mode --key-file - $encrypted_disk_device $encrypted_disk_mapper_device_name
 mount /dev/mapper/$encrypted_disk_mapper_device_name /mnt/$encrypted_disk_mapper_device_name
+
+# test if we get the expected message back.
+actual_message="$(cat /mnt/$encrypted_disk_mapper_device_name/message.txt)"
+if [ "$expected_message" != "$actual_message" ]; then
+    echo "ERROR: expected_message $expected_message is not equal to actual_message $actual_message"
+    exit 1
+fi
+
+# the end.
+echo 'provision done successfully'
